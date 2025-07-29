@@ -1,9 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon, Loader2 } from 'lucide-react'
 
 import { createExpense } from '@/lib/actions/transaction.actions'
+import { createExpenseSchema } from '@/lib/validations/transaction'
 import { CategoryOption, AccountOption, paymentMethodOptions } from '@/lib/types/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,54 +17,73 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 
 interface ExpenseFormProps {
   categories: CategoryOption[]
   accounts: AccountOption[]
 }
 
+type FormData = {
+  date: string
+  amount: string
+  categoryId: string
+  accountId: string
+  paymentMethod: string
+  description: string
+  isRecurring: string
+  recurringDay: string
+}
+
 export function ExpenseForm({ categories, accounts }: ExpenseFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    amount: '',
-    categoryId: '',
-    accountId: '',
-    paymentMethod: '',
-    description: '',
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(createExpenseSchema),
+    defaultValues: {
+      date: new Date().toISOString().split('T')[0],
+      amount: '',
+      categoryId: '',
+      accountId: '',
+      paymentMethod: 'cash',
+      description: '',
+      isRecurring: 'false',
+      recurringDay: '',
+    },
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (data: FormData) => {
     setIsSubmitting(true)
     
     try {
       // FormDataを作成
-      const data = new FormData()
-      data.append('date', formData.date)
-      data.append('amount', formData.amount)
-      data.append('categoryId', formData.categoryId)
-      data.append('accountId', formData.accountId)
-      data.append('paymentMethod', formData.paymentMethod)
-      if (formData.description) {
-        data.append('description', formData.description)
+      const formData = new FormData()
+      formData.append('date', data.date)
+      formData.append('amount', data.amount)
+      formData.append('categoryId', data.categoryId)
+      formData.append('accountId', data.accountId)
+      formData.append('paymentMethod', data.paymentMethod)
+      if (data.description) {
+        formData.append('description', data.description)
+      }
+      formData.append('isRecurring', data.isRecurring)
+      if (data.recurringDay) {
+        formData.append('recurringDay', data.recurringDay)
       }
 
       // サーバーアクションを呼び出し
-      const result = await createExpense(data)
+      const result = await createExpense(formData)
 
       if (result?.success) {
         // 成功時の処理
-        setFormData({
-          date: new Date().toISOString().split('T')[0],
-          amount: '',
-          categoryId: '',
-          accountId: '',
-          paymentMethod: '',
-          description: '',
-        })
-        // 成功メッセージを表示（必要に応じてtoastなどを追加）
+        form.reset()
         console.log('支出が正常に記録されました')
       } else {
         // エラー時の処理
@@ -74,130 +96,171 @@ export function ExpenseForm({ categories, accounts }: ExpenseFormProps) {
     }
   }
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* 金額 */}
-      <div className="space-y-2">
-        <Label htmlFor="amount">金額</Label>
-        <div className="relative">
-          <Input
-            id="amount"
-            type="number"
-            placeholder="1000"
-            value={formData.amount}
-            onChange={(e) => handleInputChange('amount', e.target.value)}
-            className="pr-12"
-            required
-          />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-            円
-          </span>
-        </div>
-      </div>
-
-      {/* カテゴリ */}
-      <div className="space-y-2">
-        <Label htmlFor="categoryId">カテゴリ</Label>
-        <Select value={formData.categoryId} onValueChange={(value) => handleInputChange('categoryId', value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="カテゴリを選択" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: category.color }}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* 金額 */}
+        <FormField
+          control={form.control}
+          name="amount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>金額</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Input
+                    {...field}
+                    type="number"
+                    placeholder="1000"
+                    className="pr-12"
                   />
-                  {category.name}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* 日付 */}
-      <div className="space-y-2">
-        <Label htmlFor="date">日付</Label>
-        <Input
-          id="date"
-          type="date"
-          value={formData.date}
-          onChange={(e) => handleInputChange('date', e.target.value)}
-          required
-        />
-      </div>
-
-      {/* 支払い方法 */}
-      <div className="space-y-2">
-        <Label htmlFor="paymentMethod">支払い方法</Label>
-        <Select value={formData.paymentMethod} onValueChange={(value) => handleInputChange('paymentMethod', value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="支払い方法を選択" />
-          </SelectTrigger>
-          <SelectContent>
-            {paymentMethodOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* 口座 */}
-      <div className="space-y-2">
-        <Label htmlFor="accountId">口座</Label>
-        <Select value={formData.accountId} onValueChange={(value) => handleInputChange('accountId', value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="口座を選択" />
-          </SelectTrigger>
-          <SelectContent>
-            {accounts.map((account) => (
-              <SelectItem key={account.id} value={account.id}>
-                <div className="flex items-center justify-between w-full">
-                  <span>{account.name}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {account.balance.toLocaleString()}円
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    円
                   </span>
                 </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* メモ */}
-      <div className="space-y-2">
-        <Label htmlFor="description">メモ</Label>
-        <Input
-          id="description"
-          placeholder="メモを入力（任意）"
-          value={formData.description}
-          onChange={(e) => handleInputChange('description', e.target.value)}
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      {/* 送信ボタン */}
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            保存中...
-          </>
-        ) : (
-          '支出を記録'
-        )}
-      </Button>
-    </form>
+        {/* カテゴリ */}
+        <FormField
+          control={form.control}
+          name="categoryId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>カテゴリ</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="カテゴリを選択" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: category.color }}
+                        />
+                        {category.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* 日付 */}
+        <FormField
+          control={form.control}
+          name="date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>日付</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="date"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* 支払い方法 */}
+        <FormField
+          control={form.control}
+          name="paymentMethod"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>支払い方法</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="支払い方法を選択" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {paymentMethodOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* 口座 */}
+        <FormField
+          control={form.control}
+          name="accountId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>口座</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="口座を選択" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {accounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{account.name}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {account.balance.toLocaleString()}円
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* メモ */}
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>メモ</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="メモを入力（任意）"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* 送信ボタン */}
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              保存中...
+            </>
+          ) : (
+            '支出を記録'
+          )}
+        </Button>
+      </form>
+    </Form>
   )
 } 
