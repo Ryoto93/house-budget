@@ -1,0 +1,152 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Enums
+enum TransactionType {
+  income
+  expense
+  transfer
+}
+
+enum AccountType {
+  bank
+  cash
+  credit_card
+  e_money
+}
+
+enum CategoryType {
+  income
+  expense
+}
+
+enum ParentType {
+  fixed
+  variable
+  regular
+  temporary
+}
+
+enum PaymentMethod {
+  cash
+  credit
+  e_money
+}
+
+enum Currency {
+  JPY
+  USD
+}
+
+enum BudgetPeriod {
+  monthly
+}
+
+// 口座
+model Account {
+  id          String   @id @default(cuid())
+  name        String
+  type        AccountType
+  balance     Int      // 金額を整数として保存（例: 1234 = 1234円）
+  currency    Currency @default(JPY)
+  lastUpdated DateTime @default(now())
+  
+  // リレーション
+  transactions Transaction[]
+  templates    TransactionTemplate[]
+  
+  @@map("accounts")
+}
+
+// カテゴリ
+model Category {
+  id         String      @id @default(cuid())
+  name       String
+  type       CategoryType
+  parentType ParentType
+  isCustom   Boolean     @default(false)
+  order      Int         @default(0)
+  color      String      // グラフ表示用
+  
+  // リレーション
+  transactions Transaction[]
+  templates    TransactionTemplate[]
+  budgets      Budget[]
+  
+  @@map("categories")
+}
+
+// 取引
+model Transaction {
+  id            String        @id @default(cuid())
+  date          DateTime
+  amount        Int           // 金額を整数として保存（例: 1234 = 1234円）
+  type          TransactionType
+  categoryId    String
+  accountId     String
+  paymentMethod PaymentMethod?
+  description   String?       // メモ欄をオプショナルに
+  isRecurring   Boolean       @default(false)
+  recurringDay  Int?
+  
+  // リレーション
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  account  Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  @@map("transactions")
+}
+
+// 取引テンプレート
+model TransactionTemplate {
+  id            String        @id @default(cuid())
+  name          String
+  type          TransactionType
+  amount        Int           // 金額を整数として保存（例: 1234 = 1234円）
+  categoryId    String
+  accountId     String
+  paymentMethod PaymentMethod?
+  description   String?       // メモ欄をオプショナルに
+  
+  // リレーション
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  account  Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  @@map("transaction_templates")
+}
+
+// 予算
+model Budget {
+  id         String      @id @default(cuid())
+  categoryId String
+  amount     Int         // 金額を整数として保存（例: 1234 = 1234円）
+  period     BudgetPeriod @default(monthly)
+  year       Int
+  month      Int
+  
+  // リレーション
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  @@unique([categoryId, year, month])
+  @@map("budgets")
+}
+
+// シミュレーション
+model Simulation {
+  id       String   @id @default(cuid())
+  name     String
+  baseDate DateTime
+  endDate  DateTime
+  events   Json     // What-if events
+  result   Json     // Calculation results
+  
+  @@map("simulations")
+}
