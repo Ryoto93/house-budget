@@ -61,7 +61,7 @@ export function ExpenseForm({ categories, accounts }: ExpenseFormProps) {
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true)
-    
+
     try {
       // FormDataを作成
       const formData = new FormData()
@@ -79,16 +79,9 @@ export function ExpenseForm({ categories, accounts }: ExpenseFormProps) {
       }
 
       // サーバーアクションを呼び出し
-      const result = await createExpense(formData)
+      await createExpense(formData)
 
-      if (result?.success) {
-        // 成功時の処理
-        form.reset()
-        console.log('支出が正常に記録されました')
-      } else {
-        // エラー時の処理
-        console.error('支出記録エラー:', result?.error || '予期しないエラーが発生しました')
-      }
+      // リダイレクトはサーバーアクション側で行われるため、ここでの成功/失敗処理は不要
     } catch (error) {
       console.error('フォーム送信エラー:', error)
     } finally {
@@ -174,62 +167,63 @@ export function ExpenseForm({ categories, accounts }: ExpenseFormProps) {
           )}
         />
 
-        {/* 支払い方法 */}
-        <FormField
-          control={form.control}
-          name="paymentMethod"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>支払い方法</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="支払い方法を選択" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {paymentMethodOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* 支払い方法と口座を横並びに */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="paymentMethod"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>支払い方法</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="支払い方法を選択" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {paymentMethodOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {/* 口座 */}
-        <FormField
-          control={form.control}
-          name="accountId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>口座</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="口座を選択" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {accounts.map((account) => (
-                    <SelectItem key={account.id} value={account.id}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{account.name}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {account.balance.toLocaleString()}円
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="accountId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>口座</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="口座を選択" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {accounts.map((account) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{account.name}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {account.balance.toLocaleString()}円
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* メモ */}
         <FormField
