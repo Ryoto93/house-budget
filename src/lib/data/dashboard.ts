@@ -61,7 +61,7 @@ export async function getSummaryData(): Promise<SummaryData> {
   })
 
   // 現在の総資産を取得（全口座の残高合計）
-  const totalAssetsResult = await prisma.account.aggregate({
+  const totalAssetsResult = await prisma.budgetAccount.aggregate({
     _sum: {
       balance: true,
     },

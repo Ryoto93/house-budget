@@ -7,7 +7,7 @@ import { Currency } from '@prisma/client'
  */
 export async function getAccounts(): Promise<AccountOption[]> {
   try {
-    const accounts = await prisma.account.findMany({
+    const accounts = await prisma.budgetAccount.findMany({
       orderBy: [
         { type: 'asc' },
         { name: 'asc' },
@@ -32,7 +32,7 @@ export async function getAccounts(): Promise<AccountOption[]> {
  */
 export async function getAccountsByCurrency(currency: string): Promise<AccountOption[]> {
   try {
-    const accounts = await prisma.account.findMany({
+    const accounts = await prisma.budgetAccount.findMany({
       where: {
         currency: currency as Currency,
       },

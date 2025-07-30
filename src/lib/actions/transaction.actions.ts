@@ -42,7 +42,7 @@ export async function createExpense(formData: FormData) {
       });
 
       // 口座残高を更新
-      await tx.account.update({
+      await tx.budgetAccount.update({
         where: { id: accountId },
         data: {
           balance: {
@@ -132,7 +132,7 @@ export async function createIncome(formData: FormData) {
       });
 
       // 口座残高を更新（収入なので増加）
-      await tx.account.update({
+      await tx.budgetAccount.update({
         where: { id: accountId },
         data: {
           balance: {
@@ -211,7 +211,7 @@ export async function deleteTransaction(id: string) {
       // 口座残高を元に戻す
       if (transaction.type === TransactionType.expense) {
         // 支出の場合は残高を増やす
-        await tx.account.update({
+        await tx.budgetAccount.update({
           where: { id: transaction.accountId },
           data: {
             balance: {
@@ -222,7 +222,7 @@ export async function deleteTransaction(id: string) {
         });
       } else if (transaction.type === TransactionType.income) {
         // 収入の場合は残高を減らす
-        await tx.account.update({
+        await tx.budgetAccount.update({
           where: { id: transaction.accountId },
           data: {
             balance: {
@@ -306,7 +306,7 @@ export async function updateTransaction(id: string, data: {
       // 古い金額で口座残高を元に戻す
       if (existingTransaction.type === TransactionType.expense) {
         // 支出の場合は残高を増やす（元に戻す）
-        await tx.account.update({
+        await tx.budgetAccount.update({
           where: { id: existingTransaction.accountId },
           data: {
             balance: {
@@ -317,7 +317,7 @@ export async function updateTransaction(id: string, data: {
         })
       } else if (existingTransaction.type === TransactionType.income) {
         // 収入の場合は残高を減らす（元に戻す）
-        await tx.account.update({
+        await tx.budgetAccount.update({
           where: { id: existingTransaction.accountId },
           data: {
             balance: {
@@ -341,7 +341,7 @@ export async function updateTransaction(id: string, data: {
       // 新しい金額で口座残高を更新
       if (existingTransaction.type === TransactionType.expense) {
         // 支出の場合は残高を減らす
-        await tx.account.update({
+        await tx.budgetAccount.update({
           where: { id: existingTransaction.accountId },
           data: {
             balance: {
@@ -352,7 +352,7 @@ export async function updateTransaction(id: string, data: {
         })
       } else if (existingTransaction.type === TransactionType.income) {
         // 収入の場合は残高を増やす
-        await tx.account.update({
+        await tx.budgetAccount.update({
           where: { id: existingTransaction.accountId },
           data: {
             balance: {

@@ -44,10 +44,10 @@ export async function createTransfer(data: CreateTransferInput) {
 
     // 口座の存在確認
     const [fromAccount, toAccount] = await Promise.all([
-      prisma.account.findUnique({
+      prisma.budgetAccount.findUnique({
         where: { id: fromAccountId },
       }),
-      prisma.account.findUnique({
+      prisma.budgetAccount.findUnique({
         where: { id: toAccountId },
       }),
     ])
@@ -70,7 +70,7 @@ export async function createTransfer(data: CreateTransferInput) {
     // トランザクションで一連の処理を実行
     await prisma.$transaction(async (tx) => {
       // 振替元口座の残高を減らす
-      await tx.account.update({
+      await tx.budgetAccount.update({
         where: { id: fromAccountId },
         data: {
           balance: {
@@ -81,7 +81,7 @@ export async function createTransfer(data: CreateTransferInput) {
       })
 
       // 振替先口座の残高を増やす
-      await tx.account.update({
+      await tx.budgetAccount.update({
         where: { id: toAccountId },
         data: {
           balance: {

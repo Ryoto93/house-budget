@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
 // Enums
@@ -51,9 +52,72 @@ enum BudgetPeriod {
   monthly
 }
 
-// 口座
+// NextAuth.js Models
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // リレーション
+  accounts      Account[]
+  sessions      Session[]
+  budgetAccounts BudgetAccount[]
+  categories    Category[]
+  transactions  Transaction[]
+  templates     TransactionTemplate[]
+  budgets       Budget[]
+  simulations   Simulation[]
+
+  @@map("users")
+}
+
 model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// 口座（名前を変更してNextAuth.jsのAccountと衝突を回避）
+model BudgetAccount {
   id          String   @id @default(cuid())
+  userId      String
   name        String
   type        AccountType
   balance     Int      // 金額を整数として保存（例: 1234 = 1234円）
@@ -61,15 +125,17 @@ model Account {
   lastUpdated DateTime @default(now())
   
   // リレーション
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
   templates    TransactionTemplate[]
   
-  @@map("accounts")
+  @@map("budget_accounts")
 }
 
 // カテゴリ
 model Category {
   id         String      @id @default(cuid())
+  userId     String
   name       String
   type       CategoryType
   parentType ParentType
@@ -78,6 +144,7 @@ model Category {
   color      String      // グラフ表示用
   
   // リレーション
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
   templates    TransactionTemplate[]
   budgets      Budget[]
@@ -88,6 +155,7 @@ model Category {
 // 取引
 model Transaction {
   id            String        @id @default(cuid())
+  userId        String
   date          DateTime
   amount        Int           // 金額を整数として保存（例: 1234 = 1234円）
   type          TransactionType
@@ -99,8 +167,9 @@ model Transaction {
   recurringDay  Int?
   
   // リレーション
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  account  Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  account  BudgetAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
   
   @@map("transactions")
 }
@@ -108,6 +177,7 @@ model Transaction {
 // 取引テンプレート
 model TransactionTemplate {
   id            String        @id @default(cuid())
+  userId        String
   name          String
   type          TransactionType
   amount        Int           // 金額を整数として保存（例: 1234 = 1234円）
@@ -117,8 +187,9 @@ model TransactionTemplate {
   description   String?       // メモ欄をオプショナルに
   
   // リレーション
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  account  Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  account  BudgetAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
   
   @@map("transaction_templates")
 }
@@ -126,6 +197,7 @@ model TransactionTemplate {
 // 予算
 model Budget {
   id         String      @id @default(cuid())
+  userId     String
   categoryId String
   amount     Int         // 金額を整数として保存（例: 1234 = 1234円）
   period     BudgetPeriod @default(monthly)
@@ -133,6 +205,7 @@ model Budget {
   month      Int
   
   // リレーション
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   
   @@unique([categoryId, year, month])
@@ -142,11 +215,15 @@ model Budget {
 // シミュレーション
 model Simulation {
   id       String   @id @default(cuid())
+  userId   String
   name     String
   baseDate DateTime
   endDate  DateTime
   events   Json     // What-if events
   result   Json     // Calculation results
+  
+  // リレーション
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@map("simulations")
 }

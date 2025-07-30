@@ -114,7 +114,7 @@ export async function seedData() {
     })
 
     // 口座の作成
-    const accounts = await prisma.account.createMany({
+    const accounts = await prisma.budgetAccount.createMany({
       data: [
         {
           name: 'メインバンク',
@@ -166,7 +166,7 @@ export async function resetAndSeed() {
     await prisma.budget.deleteMany()
     await prisma.simulation.deleteMany()
     await prisma.category.deleteMany()
-    await prisma.account.deleteMany()
+    await prisma.budgetAccount.deleteMany()
 
     console.log('✅ データベースをリセットしました')
 
