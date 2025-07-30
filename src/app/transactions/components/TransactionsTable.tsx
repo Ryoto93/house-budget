@@ -3,6 +3,9 @@
 import { formatCurrency } from '@/lib/utils'
 import { TransactionWithDetails } from '@/lib/data/transactions'
 import { TransactionType } from '@prisma/client'
+import { deleteTransaction } from '@/lib/actions/transaction.actions'
+import { Button } from '@/components/ui/button'
+import { Trash2 } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -17,6 +20,19 @@ interface TransactionsTableProps {
 }
 
 export function TransactionsTable({ transactions }: TransactionsTableProps) {
+  // 削除ボタンのハンドラー
+  const handleDelete = async (id: string) => {
+    if (confirm('この取引を削除しますか？この操作は取り消せません。')) {
+      const result = await deleteTransaction(id)
+      if (result.success) {
+        // 成功時はページをリロード
+        window.location.reload()
+      } else {
+        alert(`削除に失敗しました: ${result.error}`)
+      }
+    }
+  }
+
   // 日付をフォーマットする関数
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('ja-JP', {
@@ -80,6 +96,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
             <TableHead className="text-right">金額</TableHead>
             <TableHead>口座</TableHead>
             <TableHead>メモ</TableHead>
+            <TableHead className="text-center">操作</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -111,6 +128,17 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
               </TableCell>
               <TableCell className="text-slate-500 max-w-xs truncate">
                 {transaction.description || '-'}
+              </TableCell>
+              <TableCell className="text-center">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDelete(transaction.id)}
+                  className="h-8 px-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">削除</span>
+                </Button>
               </TableCell>
             </TableRow>
           ))}

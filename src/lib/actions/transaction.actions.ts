@@ -185,3 +185,79 @@ export async function createIncome(formData: FormData) {
     }
   }
 }
+
+/**
+ * 取引を削除するサーバーアクション
+ */
+export async function deleteTransaction(id: string) {
+  try {
+    // データベース処理をトランザクションで囲み、安全性を高めます
+    await prisma.$transaction(async (tx) => {
+      // 削除対象の取引を取得
+      const transaction = await tx.transaction.findUnique({
+        where: { id },
+        include: { account: true },
+      });
+
+      if (!transaction) {
+        throw new Error('取引が見つかりません。');
+      }
+
+      // 取引を削除
+      await tx.transaction.delete({
+        where: { id },
+      });
+
+      // 口座残高を元に戻す
+      if (transaction.type === TransactionType.expense) {
+        // 支出の場合は残高を増やす
+        await tx.account.update({
+          where: { id: transaction.accountId },
+          data: {
+            balance: {
+              increment: transaction.amount,
+            },
+            lastUpdated: new Date(),
+          },
+        });
+      } else if (transaction.type === TransactionType.income) {
+        // 収入の場合は残高を減らす
+        await tx.account.update({
+          where: { id: transaction.accountId },
+          data: {
+            balance: {
+              decrement: transaction.amount,
+            },
+            lastUpdated: new Date(),
+          },
+        });
+      }
+    });
+
+    // キャッシュをクリア
+    revalidatePath('/transactions');
+
+    return {
+      success: true,
+      message: '取引を削除しました。',
+    };
+
+  } catch (error: unknown) {
+    console.error('取引削除エラー:', error);
+
+    // データベースエラーの場合
+    if (error instanceof Error) {
+      return {
+        success: false,
+        error: 'データベースエラーが発生しました。',
+        details: error.message,
+      };
+    }
+
+    // その他のエラー
+    return {
+      success: false,
+      error: '予期しないエラーが発生しました。',
+    };
+  }
+}
