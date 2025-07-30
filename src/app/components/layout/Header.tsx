@@ -34,6 +34,12 @@ export default function Header() {
               ダッシュボード
             </Link>
             <Link
+              href="/transactions"
+              className="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200"
+            >
+              取引履歴
+            </Link>
+            <Link
               href="/incomes/new"
               className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-medium transition-colors duration-200"
             >
