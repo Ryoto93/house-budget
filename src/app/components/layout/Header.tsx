@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import AuthButton from '../auth/AuthButton'
 
 export default function Header() {
   return (
@@ -64,6 +65,9 @@ export default function Header() {
               シミュレーション
             </Link>
           </nav>
+
+          {/* 認証ボタン */}
+          <AuthButton />
         </div>
       </div>
     </header>
