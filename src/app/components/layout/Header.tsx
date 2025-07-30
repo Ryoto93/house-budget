@@ -34,6 +34,12 @@ export default function Header() {
               ダッシュボード
             </Link>
             <Link
+              href="/incomes/new"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-medium transition-colors duration-200"
+            >
+              収入を記録
+            </Link>
+            <Link
               href="/expenses/new"
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors duration-200"
             >
