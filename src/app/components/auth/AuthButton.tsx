@@ -1,37 +1,39 @@
 'use client'
+
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { LogIn, LogOut, User } from 'lucide-react'
+import Image from 'next/image'
 
-export default function AuthButton() {
+export function AuthButton() {
   const { data: session, status } = useSession()
 
+  // セッション情報を読み込み中の表示
   if (status === 'loading') {
-    return (
-      <Button variant="outline" disabled>
-        <User className="h-4 w-4 mr-2" />
-        読み込み中...
-      </Button>
-    )
+    return <div className="w-24 h-9 bg-gray-200 rounded-md animate-pulse" />
   }
 
+  // 未ログイン時の表示
   if (!session) {
     return (
-      <Button onClick={() => signIn('google')} variant="default">
-        <LogIn className="h-4 w-4 mr-2" />
+      <Button onClick={() => signIn('google')}>
         ログイン
       </Button>
     )
   }
 
+  // ログイン済み時の表示
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex items-center gap-2 text-sm">
-        <User className="h-4 w-4" />
-        <span>{session.user?.name || session.user?.email}</span>
-      </div>
-      <Button onClick={() => signOut()} variant="outline" size="sm">
-        <LogOut className="h-4 w-4 mr-2" />
+    <div className="flex items-center gap-4">
+      {session.user?.image && (
+        <Image
+          src={session.user.image}
+          alt={session.user.name || 'User Avatar'}
+          width={32}
+          height={32}
+          className="rounded-full"
+        />
+      )}
+      <Button onClick={() => signOut()} variant="outline">
         ログアウト
       </Button>
     </div>
