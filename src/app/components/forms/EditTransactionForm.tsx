@@ -14,13 +14,6 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { DatePicker } from '@/components/ui/date-picker'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Transaction, TransactionType, Category, Account } from '@prisma/client'
 import { updateTransaction } from '@/lib/actions/transaction.actions'
 import { Loader2 } from 'lucide-react'
