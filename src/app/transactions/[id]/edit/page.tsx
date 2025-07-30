@@ -2,14 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { EditTransactionForm } from '@/app/components/forms/EditTransactionForm';
 import { redirect } from 'next/navigation';
 
-// ★ Next.jsのApp Routerが期待する正しい型定義
-interface EditTransactionPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default async function EditTransactionPage({ params }: EditTransactionPageProps) {
+// ★ Next.jsのApp Routerが期待する、より直接的で正確な型定義に修正
+export default async function EditTransactionPage({ params }: { params: { id: string } }) {
   const { id } = params;
 
   // 取引データを取得

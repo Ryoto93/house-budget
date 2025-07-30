@@ -1,6 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { getSummaryData, getLatestTransactions, getCategorySpending } from '@/lib/data/dashboard'
-import { TransactionType } from '@prisma/client'
 import { TrendingUp, TrendingDown, Wallet } from 'lucide-react'
 import { SummaryCard } from './components/SummaryCard'
 import { RecentTransactions } from './components/RecentTransactions'
