@@ -261,3 +261,133 @@ export async function deleteTransaction(id: string) {
     };
   }
 }
+
+/**
+ * 取引を更新するサーバーアクション
+ */
+export async function updateTransaction(id: string, data: {
+  amount: number
+  date: Date
+  description?: string
+}) {
+  try {
+    const { amount, date, description } = data
+
+    // バリデーション
+    if (!id || !amount || !date) {
+      return {
+        success: false,
+        error: '必須項目が不足しています。',
+      }
+    }
+
+    if (amount <= 0) {
+      return {
+        success: false,
+        error: '金額は0より大きい値を入力してください。',
+      }
+    }
+
+    // 既存の取引を取得
+    const existingTransaction = await prisma.transaction.findUnique({
+      where: { id },
+      include: { account: true },
+    })
+
+    if (!existingTransaction) {
+      return {
+        success: false,
+        error: '取引が見つかりません。',
+      }
+    }
+
+    // トランザクションで一連の処理を実行
+    await prisma.$transaction(async (tx) => {
+      // 古い金額で口座残高を元に戻す
+      if (existingTransaction.type === TransactionType.expense) {
+        // 支出の場合は残高を増やす（元に戻す）
+        await tx.account.update({
+          where: { id: existingTransaction.accountId },
+          data: {
+            balance: {
+              increment: existingTransaction.amount,
+            },
+            lastUpdated: new Date(),
+          },
+        })
+      } else if (existingTransaction.type === TransactionType.income) {
+        // 収入の場合は残高を減らす（元に戻す）
+        await tx.account.update({
+          where: { id: existingTransaction.accountId },
+          data: {
+            balance: {
+              decrement: existingTransaction.amount,
+            },
+            lastUpdated: new Date(),
+          },
+        })
+      }
+
+      // 取引を更新
+      await tx.transaction.update({
+        where: { id },
+        data: {
+          amount,
+          date,
+          description: description || null,
+        },
+      })
+
+      // 新しい金額で口座残高を更新
+      if (existingTransaction.type === TransactionType.expense) {
+        // 支出の場合は残高を減らす
+        await tx.account.update({
+          where: { id: existingTransaction.accountId },
+          data: {
+            balance: {
+              decrement: amount,
+            },
+            lastUpdated: new Date(),
+          },
+        })
+      } else if (existingTransaction.type === TransactionType.income) {
+        // 収入の場合は残高を増やす
+        await tx.account.update({
+          where: { id: existingTransaction.accountId },
+          data: {
+            balance: {
+              increment: amount,
+            },
+            lastUpdated: new Date(),
+          },
+        })
+      }
+    })
+
+    // キャッシュをクリア
+    revalidatePath('/dashboard')
+    revalidatePath('/transactions')
+    revalidatePath('/accounts')
+
+    // 取引履歴ページにリダイレクト
+    redirect('/transactions')
+
+  } catch (error: unknown) {
+    console.error('取引更新エラー:', error)
+
+    // データベースエラーの場合
+    if (error instanceof Error) {
+      return {
+        success: false,
+        error: 'データベースエラーが発生しました。',
+        details: error.message,
+      }
+    }
+
+    // その他のエラー
+    return {
+      success: false,
+      error: '予期しないエラーが発生しました。',
+    }
+  }
+}
