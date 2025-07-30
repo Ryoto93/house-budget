@@ -51,6 +51,12 @@ export default function Header() {
             >
               支出を記録
             </Link>
+            <Link
+              href="/transfers/new"
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 font-medium transition-colors duration-200"
+            >
+              口座振替
+            </Link>
           </nav>
         </div>
       </div>
