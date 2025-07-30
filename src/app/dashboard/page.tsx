@@ -1,204 +1,221 @@
-import { format } from 'date-fns'
-import { ja } from 'date-fns/locale'
-import { 
-  getSummaryData, 
-  getLatestTransactions, 
-  getCategorySpending 
-} from '@/lib/data/dashboard'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { getSummaryData, getLatestTransactions, getCategorySpending } from '@/lib/data/dashboard'
 import { TransactionType } from '@prisma/client'
 
 export default async function DashboardPage() {
-  // データを並行取得
-  const [summary, transactions, categorySpending] = await Promise.all([
+  // データを並行で取得
+  const [summaryData, latestTransactions, categorySpending] = await Promise.all([
     getSummaryData(),
     getLatestTransactions(),
     getCategorySpending(),
   ])
 
+  // 金額をフォーマットする関数
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('ja-JP', {
+      style: 'currency',
+      currency: 'JPY',
+    }).format(amount)
+  }
+
+  // 日付をフォーマットする関数
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('ja-JP', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }).format(new Date(date))
+  }
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* ページヘッダー */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            ダッシュボード
-          </h1>
-          <p className="text-gray-600">
-            {format(new Date(), 'yyyy年M月', { locale: ja })}の家計状況
-          </p>
-        </div>
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">ダッシュボード</h1>
+        <p className="text-muted-foreground">
+          {new Date().toLocaleDateString('ja-JP', { 
+            year: 'numeric', 
+            month: 'long' 
+          })}の概要
+        </p>
+      </div>
 
-        {/* サマリーカード */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* 総資産 */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">総資産</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  ¥{summary.totalAssets.toLocaleString()}
+      {/* サマリーカード */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">今月の収入</CardTitle>
+            <svg
+              className="h-4 w-4 text-green-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+              />
+            </svg>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(summaryData.totalIncome)}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">今月の支出</CardTitle>
+            <svg
+              className="h-4 w-4 text-red-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+              />
+            </svg>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              {formatCurrency(summaryData.totalExpense)}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">総資産</CardTitle>
+            <svg
+              className="h-4 w-4 text-blue-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
+              />
+            </svg>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {formatCurrency(summaryData.totalAssets)}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 最新の取引 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>最新の取引</CardTitle>
+            <CardDescription>
+              最近の5件の取引履歴
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {latestTransactions.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4">
+                  取引履歴がありません
                 </p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* 今月の収入 */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">今月の収入</p>
-                <p className="text-2xl font-bold text-green-600">
-                  ¥{summary.incomeTotal.toLocaleString()}
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* 今月の支出 */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">今月の支出</p>
-                <p className="text-2xl font-bold text-red-600">
-                  ¥{summary.expenseTotal.toLocaleString()}
-                </p>
-              </div>
-              <div className="p-3 bg-red-100 rounded-full">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* 純収入 */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">純収入</p>
-                <p className={`text-2xl font-bold ${summary.netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  ¥{summary.netIncome.toLocaleString()}
-                </p>
-              </div>
-              <div className={`p-3 rounded-full ${summary.netIncome >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-                <svg className={`w-6 h-6 ${summary.netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* 最新の取引 */}
-          <div className="bg-white rounded-lg shadow-sm border">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-semibold text-gray-900">最新の取引</h2>
-            </div>
-            <div className="p-6">
-              {transactions.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">取引データがありません</p>
               ) : (
-                <div className="space-y-4">
-                  {transactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: transaction.categoryColor }}
-                        />
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {transaction.categoryName}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {transaction.accountName} • {format(transaction.date, 'M/d', { locale: ja })}
-                          </p>
-                          {transaction.description && (
-                            <p className="text-sm text-gray-400 truncate">
-                              {transaction.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className={`font-semibold ${
-                          transaction.type === TransactionType.income ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {transaction.type === TransactionType.income ? '+' : '-'}
-                          ¥{transaction.amount.toLocaleString()}
+                latestTransactions.map((transaction) => (
+                  <div
+                    key={transaction.id}
+                    className="flex items-center justify-between p-3 rounded-lg border"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          transaction.type === TransactionType.income
+                            ? 'bg-green-500'
+                            : transaction.type === TransactionType.expense
+                            ? 'bg-red-500'
+                            : 'bg-blue-500'
+                        }`}
+                      />
+                      <div>
+                        <p className="font-medium">
+                          {transaction.description || '取引'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {transaction.categoryName} • {transaction.accountName}
                         </p>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="text-right">
+                      <p
+                        className={`font-medium ${
+                          transaction.type === TransactionType.income
+                            ? 'text-green-600'
+                            : transaction.type === TransactionType.expense
+                            ? 'text-red-600'
+                            : 'text-blue-600'
+                        }`}
+                      >
+                        {transaction.type === TransactionType.expense ? '-' : '+'}
+                        {formatCurrency(transaction.amount)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatDate(transaction.date)}
+                      </p>
+                    </div>
+                  </div>
+                ))
               )}
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* カテゴリ別支出 */}
-          <div className="bg-white rounded-lg shadow-sm border">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-semibold text-gray-900">カテゴリ別支出</h2>
-            </div>
-            <div className="p-6">
+        {/* カテゴリ別支出 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>カテゴリ別支出</CardTitle>
+            <CardDescription>
+              今月のカテゴリ別支出合計
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
               {categorySpending.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">支出データがありません</p>
+                <p className="text-muted-foreground text-center py-4">
+                  支出データがありません
+                </p>
               ) : (
-                <div className="space-y-4">
-                  {categorySpending.map((category) => (
-                    <div key={category.categoryId} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div
-                          className="w-4 h-4 rounded-full"
-                          style={{ backgroundColor: category.categoryColor }}
-                        />
-                        <span className="font-medium text-gray-900">
-                          {category.categoryName}
-                        </span>
-                      </div>
-                      <span className="font-semibold text-red-600">
-                        ¥{category.amount.toLocaleString()}
+                categorySpending.map((category) => (
+                  <div
+                    key={category.categoryId}
+                    className="flex items-center justify-between p-3 rounded-lg border"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: category.categoryColor }}
+                      />
+                      <span className="font-medium">
+                        {category.categoryName}
                       </span>
                     </div>
-                  ))}
-                </div>
+                    <span className="font-bold text-red-600">
+                      {formatCurrency(category.totalAmount)}
+                    </span>
+                  </div>
+                ))
               )}
             </div>
-          </div>
-        </div>
-
-        {/* アクションボタン */}
-        <div className="mt-8 flex justify-center space-x-4">
-          <a
-            href="/expenses/new"
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            支出を記録
-          </a>
-          <a
-            href="/transactions"
-            className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            取引履歴
-          </a>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
