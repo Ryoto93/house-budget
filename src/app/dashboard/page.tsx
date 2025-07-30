@@ -4,6 +4,7 @@ import { TransactionType } from '@prisma/client'
 import { TrendingUp, TrendingDown, Wallet } from 'lucide-react'
 import { SummaryCard } from './components/SummaryCard'
 import { RecentTransactions } from './components/RecentTransactions'
+import { CategoryChart } from './components/CategoryChart'
 
 export default async function DashboardPage() {
   // データを並行で取得
@@ -13,95 +14,83 @@ export default async function DashboardPage() {
     getCategorySpending(),
   ])
 
-  // 金額をフォーマットする関数
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ja-JP', {
-      style: 'currency',
-      currency: 'JPY',
-    }).format(amount)
-  }
-
-  // 日付をフォーマットする関数
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('ja-JP', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }).format(new Date(date))
-  }
-
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">ダッシュボード</h1>
-        <p className="text-muted-foreground">
-          {new Date().toLocaleDateString('ja-JP', { 
-            year: 'numeric', 
-            month: 'long' 
-          })}の概要
-        </p>
-      </div>
-
-      {/* サマリーカード */}
-      <div className="grid grid-cols-3 gap-6">
-        <SummaryCard
-          title="今月の収入"
-          amount={summaryData.totalIncome}
-          icon={TrendingUp}
-        />
-        <SummaryCard
-          title="今月の支出"
-          amount={summaryData.totalExpense}
-          icon={TrendingDown}
-        />
-        <SummaryCard
-          title="総資産"
-          amount={summaryData.totalAssets}
-          icon={Wallet}
-        />
-      </div>
-
-      {/* 最新の取引 */}
-      <RecentTransactions transactions={latestTransactions} />
-
-      {/* カテゴリ別支出 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>カテゴリ別支出</CardTitle>
-          <CardDescription>
-            今月のカテゴリ別支出合計
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {categorySpending.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">
-                支出データがありません
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="container mx-auto px-6 py-8">
+        {/* ヘッダーセクション */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent">
+                ダッシュボード
+              </h1>
+              <p className="text-slate-600 mt-2 text-lg">
+                {new Date().toLocaleDateString('ja-JP', { 
+                  year: 'numeric', 
+                  month: 'long' 
+                })}の家計状況
               </p>
-            ) : (
-              categorySpending.map((category) => (
-                <div
-                  key={category.categoryId}
-                  className="flex items-center justify-between p-3 rounded-lg border"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: category.categoryColor }}
-                    />
-                    <span className="font-medium">
-                      {category.categoryName}
-                    </span>
-                  </div>
-                  <span className="font-bold text-red-600">
-                    {formatCurrency(category.totalAmount)}
-                  </span>
-                </div>
-              ))
-            )}
+            </div>
+            <div className="hidden md:block">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Wallet className="w-8 h-8 text-white" />
+              </div>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* サマリーカードセクション */}
+        <div className="mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <SummaryCard
+              title="今月の収入"
+              amount={summaryData.totalIncome}
+              icon={TrendingUp}
+            />
+            <SummaryCard
+              title="今月の支出"
+              amount={summaryData.totalExpense}
+              icon={TrendingDown}
+            />
+            <SummaryCard
+              title="総資産"
+              amount={summaryData.totalAssets}
+              icon={Wallet}
+            />
+          </div>
+        </div>
+
+        {/* メインコンテンツセクション */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* 最新の取引 - 2列分の幅 */}
+          <div className="xl:col-span-2">
+            <RecentTransactions transactions={latestTransactions} />
+          </div>
+          
+          {/* カテゴリチャート - 1列分の幅 */}
+          <div className="xl:col-span-1">
+            <Card className="h-full border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <CardHeader className="pb-6">
+                <CardTitle className="text-xl font-semibold text-slate-800">
+                  支出の内訳
+                </CardTitle>
+                <CardDescription className="text-slate-600">
+                  カテゴリ別の支出割合
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <CategoryChart 
+                  data={categorySpending.map(category => ({
+                    name: category.categoryName,
+                    total: category.totalAmount,
+                    color: category.categoryColor
+                  }))}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
     </div>
   )
 } 
