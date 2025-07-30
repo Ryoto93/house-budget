@@ -16,7 +16,7 @@ declare module "next-auth" {
   }
 }
 
-export const authOptions: NextAuthOptions = {
+const authOptions: NextAuthOptions = {
   // Prismaをデータベースアダプターとして設定
   adapter: PrismaAdapter(prisma) as Adapter,
   
