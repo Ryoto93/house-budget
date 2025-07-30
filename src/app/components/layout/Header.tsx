@@ -57,6 +57,12 @@ export default function Header() {
             >
               口座振替
             </Link>
+            <Link
+              href="/simulations"
+              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 font-medium transition-colors duration-200"
+            >
+              シミュレーション
+            </Link>
           </nav>
         </div>
       </div>
