@@ -21,6 +21,13 @@ import { TransactionType } from '@prisma/client'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Loader2, TrendingUp, TrendingDown } from 'lucide-react'
 
+// シミュレーションデータポイントの型定義
+interface SimulationDataPoint {
+  date: string;
+  balance: number;
+  events?: string;
+}
+
 // バリデーションスキーマ
 const simulationSchema = z.object({
   startDate: z.date(),
@@ -30,7 +37,7 @@ const simulationSchema = z.object({
     date: z.date(),
     amount: z.number().min(1, '金額は1円以上を入力してください'),
     type: z.nativeEnum(TransactionType),
-    description: z.string().min(1, '説明を入力してください'),
+    description: z.string().optional(),
   })),
 }).refine((data) => data.startDate < data.endDate, {
   message: '開始日は終了日より前の日付を指定してください',
@@ -45,7 +52,7 @@ interface WhatIfEvent {
   date: Date
   amount: number
   type: TransactionType
-  description: string
+  description?: string
 }
 
 // シミュレーション結果の型定義
@@ -105,7 +112,8 @@ export default function SimulationsPage() {
   }
 
   // What-if イベントを更新
-  const updateWhatIfEvent = (id: string, field: keyof WhatIfEvent, value: any) => {
+  const updateWhatIfEvent = (id: string, field: keyof WhatIfEvent, value: string | number | Date | TransactionType | undefined) => {
+    if (value === undefined) return
     const updatedEvents = whatIfEvents.map(event =>
       event.id === id ? { ...event, [field]: value } : event
     )
@@ -143,7 +151,7 @@ export default function SimulationsPage() {
   }
 
   // グラフ用データの準備
-  const chartData = simulationResult.map(item => ({
+  const chartData: SimulationDataPoint[] = simulationResult.map(item => ({
     date: new Date(item.date).toLocaleDateString('ja-JP', {
       month: 'short',
       day: 'numeric',
