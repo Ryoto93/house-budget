@@ -1,6 +1,4 @@
 import { getTransactionById } from '@/lib/data/transactions';
-import { getCategories } from '@/lib/data/categories';
-import { getAccounts } from '@/lib/data/accounts';
 import { EditTransactionForm } from '@/app/components/forms/EditTransactionForm';
 import { redirect } from 'next/navigation';
 
@@ -20,12 +18,8 @@ export default async function EditTransactionPage(props: PageProps) {
   const { id } = params;
 
   try {
-    // 必要なデータを並行して取得
-    const [transaction, categories, accounts] = await Promise.all([
-      getTransactionById(id),
-      getCategories(),
-      getAccounts(),
-    ]);
+    // 取引データを取得
+    const transaction = await getTransactionById(id);
 
     // 取引データが見つからなければ、取引一覧ページにリダイレクト
     if (!transaction) {
@@ -46,8 +40,6 @@ export default async function EditTransactionPage(props: PageProps) {
           <div className="bg-white rounded-lg shadow-sm border p-6">
             <EditTransactionForm
               transaction={transaction}
-              categories={categories}
-              accounts={accounts}
             />
           </div>
         </div>

@@ -21,7 +21,15 @@ import { Loader2 } from 'lucide-react'
 // 取引データの型定義
 type TransactionWithDetails = Transaction & {
   category: Category
-  account: Account
+  account: {
+    id: string
+    name: string
+    userId: string
+    type: string
+    balance: number
+    currency: string
+    lastUpdated: Date
+  }
 }
 
 // バリデーションスキーマ
