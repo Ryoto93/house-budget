@@ -17,7 +17,6 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Transaction, TransactionType, Category, Account } from '@prisma/client'
 import { updateTransaction } from '@/lib/actions/transaction.actions'
 import { Loader2 } from 'lucide-react'
-import { CategoryOption, AccountOption } from '@/lib/types/common'
 
 // 取引データの型定義
 type TransactionWithDetails = Transaction & {
