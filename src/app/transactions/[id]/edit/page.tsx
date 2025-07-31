@@ -4,21 +4,19 @@ import { getAccounts } from '@/lib/data/accounts';
 import { EditTransactionForm } from '@/app/components/forms/EditTransactionForm';
 import { redirect } from 'next/navigation';
 
-// Vercel対応：Next.jsの標準的な型定義パターン
-type Params = {
-  id: string;
-};
+// Next.js 15の標準的な型定義
+interface PageProps {
+  params: Promise<{
+    id: string;
+  }>;
+  searchParams?: Promise<{
+    [key: string]: string | string[] | undefined;
+  }>;
+}
 
-type SearchParams = {
-  [key: string]: string | string[] | undefined;
-};
-
-type Props = {
-  params: Params;
-  searchParams?: SearchParams;
-};
-
-export default async function EditTransactionPage({ params }: Props) {
+export default async function EditTransactionPage(props: PageProps) {
+  // paramsを確実にawait
+  const params = await props.params;
   const { id } = params;
 
   try {
@@ -61,8 +59,9 @@ export default async function EditTransactionPage({ params }: Props) {
   }
 }
 
-// Vercel対応：メタデータの生成（オプション）
-export async function generateMetadata({ params }: Props) {
+// メタデータ生成関数
+export async function generateMetadata(props: PageProps) {
+  const params = await props.params;
   const { id } = params;
   
   try {
