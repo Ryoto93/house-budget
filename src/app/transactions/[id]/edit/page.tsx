@@ -4,14 +4,8 @@ import { getAccounts } from '@/lib/data/accounts';
 import { EditTransactionForm } from '@/app/components/forms/EditTransactionForm';
 import { redirect } from 'next/navigation';
 
-// PagePropsではなく別の名前を使用
-interface EditTransactionPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default async function EditTransactionPage({ params }: EditTransactionPageProps) {
+// 型定義を削除し、TypeScriptに推論させる
+export default async function EditTransactionPage({ params }: any) {
   const { id } = params;
 
   const [transaction, categories, accounts] = await Promise.all([
