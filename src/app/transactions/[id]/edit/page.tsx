@@ -4,12 +4,9 @@ import { getAccounts } from '@/lib/data/accounts';
 import { EditTransactionForm } from '@/app/components/forms/EditTransactionForm';
 import { redirect } from 'next/navigation';
 
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default async function EditTransactionPage({ params }: PageProps) {
-  const { id } = await params;
+// ★ Next.jsのApp Routerが期待する、最も直接的で正確な型定義
+export default async function EditTransactionPage({ params }: { params: { id: string } }) {
+  const { id } = params;
 
   // 必要なデータを並行して取得
   const [transaction, categories, accounts] = await Promise.all([
@@ -34,7 +31,6 @@ export default async function EditTransactionPage({ params }: PageProps) {
             取引の詳細を編集して保存してください
           </p>
         </div>
-
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <EditTransactionForm
             transaction={transaction}
