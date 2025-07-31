@@ -4,13 +4,14 @@ import { getAccounts } from '@/lib/data/accounts';
 import { EditTransactionForm } from '@/app/components/forms/EditTransactionForm';
 import { redirect } from 'next/navigation';
 
-interface PageProps {
+// PagePropsではなく別の名前を使用
+interface EditTransactionPageProps {
   params: {
     id: string;
   };
 }
 
-export default async function EditTransactionPage({ params }: PageProps) {
+export default async function EditTransactionPage({ params }: EditTransactionPageProps) {
   const { id } = params;
 
   const [transaction, categories, accounts] = await Promise.all([
