@@ -14,14 +14,15 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { DatePicker } from '@/components/ui/date-picker'
-import { Transaction, TransactionType, Category, Account } from '@prisma/client'
+import { Transaction, TransactionType, Category, BudgetAccount } from '@prisma/client'
 import { updateTransaction } from '@/lib/actions/transaction.actions'
 import { Loader2 } from 'lucide-react'
+import { CategoryOption, AccountOption } from '@/lib/types/common'
 
-// 取引データの型定義
+// 取引データの型定義（Prismaのinclude結果に合わせる）
 type TransactionWithDetails = Transaction & {
   category: Category
-  account: Account
+  account: BudgetAccount
 }
 
 // バリデーションスキーマ
@@ -35,9 +36,11 @@ type EditTransactionFormData = z.infer<typeof editTransactionSchema>
 
 interface EditTransactionFormProps {
   transaction: TransactionWithDetails
+  categories?: CategoryOption[]
+  accounts?: AccountOption[]
 }
 
-export function EditTransactionForm({ transaction }: EditTransactionFormProps) {
+export function EditTransactionForm({ transaction, categories, accounts }: EditTransactionFormProps) {
   const form = useForm<EditTransactionFormData>({
     resolver: zodResolver(editTransactionSchema),
     defaultValues: {

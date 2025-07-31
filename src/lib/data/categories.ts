@@ -81,4 +81,11 @@ export async function getAllCategories(): Promise<CategoryOption[]> {
     console.error('カテゴリ取得エラー:', error)
     return []
   }
+}
+
+/**
+ * 全てのカテゴリを取得（getCategoriesのエイリアス）
+ */
+export async function getCategories(): Promise<CategoryOption[]> {
+  return getAllCategories()
 } 

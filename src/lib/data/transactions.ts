@@ -53,4 +53,23 @@ export async function getAllTransactions(): Promise<TransactionWithDetails[]> {
     console.error('取引データ取得エラー:', error)
     return []
   }
+}
+
+/**
+ * 特定の取引をIDで取得する
+ */
+export async function getTransactionById(id: string) {
+  try {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        account: true,
+      },
+    })
+    return transaction
+  } catch (error) {
+    console.error('取引データ取得エラー:', error)
+    return null
+  }
 } 

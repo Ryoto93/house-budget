@@ -1,19 +1,22 @@
-import { prisma } from '@/lib/prisma';
+import { getTransactionById } from '@/lib/data/transactions';
+import { getCategories } from '@/lib/data/categories';
+import { getAccounts } from '@/lib/data/accounts';
 import { EditTransactionForm } from '@/app/components/forms/EditTransactionForm';
 import { redirect } from 'next/navigation';
 
-// ★ Next.jsのApp Routerが期待する、より直接的で正確な型定義に修正
-export default async function EditTransactionPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
 
-  // 取引データを取得
-  const transaction = await prisma.transaction.findUnique({
-    where: { id },
-    include: {
-      category: true,
-      account: true,
-    },
-  });
+export default async function EditTransactionPage({ params }: PageProps) {
+  const { id } = await params;
+
+  // 必要なデータを並行して取得
+  const [transaction, categories, accounts] = await Promise.all([
+    getTransactionById(id),
+    getCategories(), // 収入・支出両方のカテゴリを取得
+    getAccounts(),
+  ]);
 
   // 取引データが見つからなければ、取引一覧ページにリダイレクト
   if (!transaction) {
@@ -33,7 +36,11 @@ export default async function EditTransactionPage({ params }: { params: { id: st
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <EditTransactionForm transaction={transaction} />
+          <EditTransactionForm
+            transaction={transaction}
+            categories={categories}
+            accounts={accounts}
+          />
         </div>
       </div>
     </div>
