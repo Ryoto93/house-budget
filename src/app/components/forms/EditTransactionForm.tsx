@@ -14,15 +14,15 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { DatePicker } from '@/components/ui/date-picker'
-import { Transaction, TransactionType, Category, BudgetAccount } from '@prisma/client'
+import { Transaction, TransactionType, Category, Account } from '@prisma/client'
 import { updateTransaction } from '@/lib/actions/transaction.actions'
 import { Loader2 } from 'lucide-react'
 import { CategoryOption, AccountOption } from '@/lib/types/common'
 
-// 取引データの型定義（Prismaのinclude結果に合わせる）
+// 取引データの型定義
 type TransactionWithDetails = Transaction & {
   category: Category
-  account: BudgetAccount
+  account: Account
 }
 
 // バリデーションスキーマ
