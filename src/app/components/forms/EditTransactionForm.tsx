@@ -36,11 +36,9 @@ type EditTransactionFormData = z.infer<typeof editTransactionSchema>
 
 interface EditTransactionFormProps {
   transaction: TransactionWithDetails
-  categories?: CategoryOption[]
-  accounts?: AccountOption[]
 }
 
-export function EditTransactionForm({ transaction, categories, accounts }: EditTransactionFormProps) {
+export function EditTransactionForm({ transaction }: EditTransactionFormProps) {
   const form = useForm<EditTransactionFormData>({
     resolver: zodResolver(editTransactionSchema),
     defaultValues: {
