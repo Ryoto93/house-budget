@@ -4,8 +4,18 @@ import { getAccounts } from '@/lib/data/accounts';
 import { EditTransactionForm } from '@/app/components/forms/EditTransactionForm';
 import { redirect } from 'next/navigation';
 
-// 型定義を削除し、TypeScriptに推論させる
-export default async function EditTransactionPage({ params }: any) {
+// PagePropsではなく別の名前を使用
+interface EditTransactionPageProps {
+  params: {
+    id: string;
+  };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
+
+export default async function EditTransactionPage({ 
+  params, 
+  searchParams 
+}: EditTransactionPageProps) {
   const { id } = params;
 
   const [transaction, categories, accounts] = await Promise.all([
